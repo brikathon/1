@@ -74,8 +74,8 @@
             padding: 20px 5px; border-radius: 12px; cursor: pointer;
             font-size: 1.1rem; font-weight: 900;
         }
-        .card.selected-t1 { background: #3498db; color: white; border-color: white; }
-        .card.selected-t2 { background: #e67e22; color: white; border-color: white; }
+        .card.selected-t1 { background: #3498db; color: white; border-color: white; cursor: default; }
+        .card.selected-t2 { background: #e67e22; color: white; border-color: white; cursor: default; }
 
         /* Game Layout */
         .game-layout { display: flex; width: 100%; justify-content: space-between; align-items: center; margin-top: 20px; }
@@ -115,6 +115,20 @@
         #result-screen { position: fixed; inset: 0; background: var(--ramadan-blue); z-index: 9000; display: none; flex-direction: column; align-items: center; justify-content: center; }
         .winner-frame { border: 8px solid var(--gold); border-radius: 20px; width: 200px; height: 280px; object-fit: cover; }
         #match-countdown { position: fixed; inset: 0; background: var(--ramadan-blue); display: none; justify-content: center; align-items: center; font-size: 8rem; color: var(--gold); z-index: 9999; }
+
+        /* Footer Credit */
+        .footer-credit {
+            margin-top: 30px;
+            padding: 15px;
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.6);
+            font-weight: 600;
+        }
+        .footer-credit a {
+            color: var(--gold);
+            text-decoration: none;
+            border-bottom: 1px solid var(--gold);
+        }
     </style>
 </head>
 <body>
@@ -148,6 +162,10 @@
         </div>
         <p id="selection-instruction" style="font-size:1.2rem; margin-top:15px; color:var(--gold)">بانتظار الفريق الأول لاختيار 3 مواضيع...</p>
         <div class="grid" id="categoryGrid"></div>
+        
+        <div class="footer-credit">
+            MADE BY <a href="https://linktr.ee/mosaabab" target="_blank">MOSAAB AB</a>
+        </div>
     </div>
 
     <div id="game-screen" class="screen hidden">
@@ -206,11 +224,8 @@
 
     <script src="questions.json"></script>
     <script>
-        // Global State (Persistent across matches)
         let globalScores = { t1: 0, t2: 0 };
         let winStreak = { t1: 0, t2: 0 };
-
-        // Match State
         let selectedCats = { t1: [], t2: [] };
         let selectingTeam = 't1';
         let teamData = { t1: { name: "", av: "a", matchScore: 0, catHits: {}, streak: 0 }, t2: { name: "", av: "b", matchScore: 0, catHits: {}, streak: 0 } };
@@ -222,8 +237,8 @@
             const grid = document.getElementById('categoryGrid');
             grid.innerHTML = '';
             document.getElementById('box-t1').classList.add('active-selection');
+            document.getElementById('box-t2').classList.remove('active-selection');
 
-            // Regroup logic
             const groups = {};
             Object.keys(quizData).forEach(key => {
                 const parts = key.split(' - ');
@@ -242,7 +257,7 @@
                 groups[genre].forEach(item => {
                     const el = document.createElement('div');
                     el.className = 'card'; 
-                    el.innerText = item.topic; // Show only Topic
+                    el.innerText = item.topic;
                     el.onclick = () => handleCategoryClick(item.full, el);
                     grid.appendChild(el);
                 });
@@ -250,8 +265,12 @@
         }
 
         function handleCategoryClick(cat, el) {
+            // Block clicks if already selected by anyone
             if (selectedCats.t1.includes(cat) || selectedCats.t2.includes(cat)) return;
             
+            // Block clicks if current selecting team is already full (3 cats)
+            if (selectedCats[selectingTeam].length >= 3) return;
+
             selectedCats[selectingTeam].push(cat);
             el.classList.add(selectingTeam === 't1' ? 'selected-t1' : 'selected-t2');
 
@@ -261,7 +280,8 @@
                 document.getElementById('box-t2').classList.add('active-selection');
                 document.getElementById('selection-instruction').innerText = "بانتظار الفريق الثاني لاختيار 3 مواضيع...";
             } else if (selectedCats.t2.length === 3) {
-                document.getElementById('selection-instruction').innerText = "تم اختيار المواضيع! اضغط بدء.";
+                document.getElementById('box-t2').classList.remove('active-selection');
+                document.getElementById('selection-instruction').innerText = "تم اختيار 6 مواضيع! اضغط بدء.";
                 document.getElementById('startBtn').disabled = false;
             }
         }
@@ -314,8 +334,6 @@
                 teamData.t1.catHits[cat] = 0; teamData.t2.catHits[cat] = 0;
                 const row = document.createElement('div');
                 row.className = 'row';
-                
-                // Show Topic only on label
                 const topicOnly = cat.split(' - ')[1] || cat;
                 row.innerHTML = `<div class="cat-label">${topicOnly}</div>`;
                 
@@ -337,10 +355,9 @@
         }
 
         function launchQuestion(cat, q) {
-            // Modal header shows Topic only
             const topicOnly = cat.split(' - ')[1] || cat;
             document.getElementById('modal-cat').innerText = topicOnly;
-            document.getElementById('modal-cat').dataset.cat = cat; // Keep full key for data reference
+            document.getElementById('modal-cat').dataset.cat = cat;
             document.getElementById('modal-q').innerText = q.q;
             document.getElementById('modal-a').innerText = q.a;
             document.getElementById('answer-section').classList.add('hidden');
@@ -389,37 +406,24 @@
             const team = teamData[teamId];
             const oppId = teamId === 't1' ? 't2' : 't1';
             const tokens = [];
-
-            // Malsou9a: Correct answer in all 6 categories on board
             const allCats = [...selectedCats.t1, ...selectedCats.t2];
             if(allCats.length === 6 && allCats.every(c => (team.catHits[c] || 0) > 0)) tokens.push("Malsou9a 🥟");
-
-            // Tuna: 9/12 score
             if(team.matchScore >= 9) tokens.push("Tuna 🐟");
-
-            // 3adhma: 4 correct from opponent's categories
             const pickedByOpp = selectedCats[oppId];
             let oppHits = 0;
             pickedByOpp.forEach(c => oppHits += (team.catHits[c] || 0));
             if(oppHits >= 4) tokens.push("3adhma 🥚");
-
-            // Battata: 4 in a row
             if(team.streak >= 4) tokens.push("Battata 🥔");
-
-            // Jben: 2 matches won in a row
             if(winStreak[teamId] >= 2) tokens.push("Jben 🧀");
-
             return tokens;
         }
 
         function showFinalResult() {
             const screen = document.getElementById('result-screen');
             screen.style.display = 'flex';
-            
             let winner = null;
             if(teamData.t1.matchScore > teamData.t2.matchScore) winner = 't1';
             else if(teamData.t2.matchScore > teamData.t1.matchScore) winner = 't2';
-
             if(winner) {
                 winStreak[winner]++;
                 winStreak[winner === 't1' ? 't2' : 't1'] = 0;
@@ -429,7 +433,6 @@
                 document.getElementById('result-text').innerText = "تعادل!";
                 winStreak.t1 = 0; winStreak.t2 = 0;
             }
-
             animateTokens('t1', 'res-tokens-1');
             animateTokens('t2', 'res-tokens-2');
         }
@@ -438,12 +441,10 @@
             const container = document.getElementById(containerId);
             container.innerHTML = '';
             const tks = checkTokens(teamId);
-            
             if(tks.length === 0) {
                 container.innerHTML = '<span style="opacity:0.5; font-size:0.8rem;">لا توجد جوائز</span>';
                 return;
             }
-
             tks.forEach((text, index) => {
                 const badge = document.createElement('span');
                 badge.className = 'token-badge';
@@ -460,11 +461,11 @@
             teamData.t1.streak = 0; teamData.t2.streak = 0;
             answeredQuestions = 0;
             boostUsed = { t1: false, t2: false };
-            
             document.getElementById('result-screen').style.display = 'none';
             document.getElementById('game-screen').classList.add('hidden');
             document.getElementById('selection-screen').classList.remove('hidden');
             document.getElementById('startBtn').disabled = true;
+            document.getElementById('selection-instruction').innerText = "بانتظار الفريق الأول لاختيار 3 مواضيع...";
             initSelection();
         }
 
