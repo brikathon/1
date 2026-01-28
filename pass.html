@@ -52,7 +52,8 @@
             border-radius: 8px;
             box-sizing: border-box;
             text-align: center;
-            font-size: 1rem;
+            font-size: 1.2rem;
+            letter-spacing: 3px;
         }
 
         button {
@@ -65,7 +66,11 @@
             font-weight: bold;
             font-size: 1.1rem;
             cursor: pointer;
-            transition: background 0.3s ease;
+            transition: transform 0.1s ease, background 0.3s ease;
+        }
+
+        button:active {
+            transform: scale(0.98);
         }
 
         button:hover {
@@ -73,10 +78,11 @@
         }
 
         #error-message {
-            color: #ff4d4d;
+            color: #ffcccc;
             margin-top: 1rem;
             font-size: 0.9rem;
             display: none;
+            font-weight: bold;
         }
     </style>
 </head>
@@ -85,12 +91,12 @@
     <div class="container">
         <img src="logo.png" alt="Logo" class="logo">
         
-        <h2>يرجى إدخال كلمة المرور</h2>
+        <h2>أدخل كلمة المرور للمتابعة</h2>
         
-        <input type="password" id="passwordInput" placeholder="كلمة المرور هنا...">
+        <input type="password" id="passwordInput" inputmode="numeric" placeholder="•••••••">
         <button onclick="checkPassword()">دخول</button>
         
-        <p id="error-message">كلمة المرور غير صحيحة، حاول مجدداً.</p>
+        <p id="error-message">كلمة المرور خاطئة. حاول مرة أخرى.</p>
     </div>
 
     <script>
@@ -98,17 +104,17 @@
             const pass = document.getElementById('passwordInput').value;
             const errorMessage = document.getElementById('error-message');
             
-            // Replace '1234' with your desired password
-            if (pass === '1234') {
+            // Updated Password
+            if (pass === '1321233') {
                 window.location.href = "https://brikathon.github.io/1/1.html";
             } else {
                 errorMessage.style.display = 'block';
-                // Shake effect or clear input
                 document.getElementById('passwordInput').value = '';
+                document.getElementById('passwordInput').focus();
             }
         }
 
-        // Allow pressing "Enter" to submit
+        // Support for Enter key
         document.getElementById('passwordInput').addEventListener('keypress', function (e) {
             if (e.key === 'Enter') {
                 checkPassword();
