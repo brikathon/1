@@ -1,6 +1,10 @@
 // allowed.js
-const ALLOWED_EMAILS = [
-    "player1@example.com",
-    "1",
-    "admin@ramadan.com"
+const ALLOWED_USERS = [
+    { email: "abassimosaab@gmail.com", password: "1321233" },
+    { email: "ihebhm@gmail.com", password: "ramadan2626" },
+    { email: "admin@game.tn", password: "pass" }
+    { email: "admin@game.tn", password: "pass" }
+    { email: "admin@game.tn", password: "pass" }
+    { email: "999", password: "666" }
+    
 ];
