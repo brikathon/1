@@ -31,7 +31,7 @@
         /* Login Screen */
         #login-screen { display: flex; flex-direction: column; justify-content: center; align-items: center; height: 85vh; width: 100%; }
         .login-box { background: rgba(255, 255, 255, 0.05); padding: 40px; border-radius: 20px; border: 2px solid var(--gold); text-align: center; width: 320px; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
-        .login-box input { width: 90%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid var(--gold); background: rgba(0,0,0,0.3); color: white; font-family: 'Cairo'; text-align: center; font-size: 1rem; }
+        .login-box input { width: 90%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid var(--gold); background: rgba(0,0,0,0.3); color: white; font-family: 'Cairo'; text-align: center; font-size: 1.2rem; text-transform: uppercase; }
         #login-error { color: var(--red); font-weight: 900; margin-top: 10px; font-size: 0.9rem; }
 
         /* Setup/Selection */
@@ -82,11 +82,10 @@
     <div id="login-screen">
         <img src="logo.png" alt="ليالي الفوازير" class="logo-img">
         <div class="login-box">
-            <h2 style="color: var(--gold); margin-bottom: 10px;">تسجيل الدخول</h2>
-            <input type="email" id="userEmail" placeholder="البريد الإلكتروني">
-            <input type="password" id="userPass" placeholder="كلمة المرور">
-            <button onclick="checkLogin()" style="padding:12px 30px; margin-top:10px; background:var(--gold); border:none; font-weight:900; border-radius:10px; cursor:pointer; width: 100%;">دخول</button>
-            <p id="login-error" class="hidden">البيانات غير صحيحة!</p>
+            <h2 style="color: var(--gold); margin-bottom: 10px;">أدخل رمز الدخول</h2>
+            <input type="text" id="accessCode" placeholder="الرمز السري">
+            <button onclick="checkAccessCode()" style="padding:12px 30px; margin-top:10px; background:var(--gold); border:none; font-weight:900; border-radius:10px; cursor:pointer; width: 100%;">دخول</button>
+            <p id="login-error" class="hidden">الرمز غير صحيح!</p>
         </div>
     </div>
 
@@ -177,10 +176,10 @@
         </div>
     </div>
 
-    <script src="allowed.js"></script>
     <script src="questions.json"></script>
     <script>
-        // Score resets on refresh (no LocalStorage used here)
+        const VALID_CODES = ["WED21A", "LKJK00", "6YTG77"];
+        
         let cumScores = { t1: 0, t2: 0 };
         let lastWinner = null;
         let consecutiveWins = 0;
@@ -193,21 +192,32 @@
         };
         let activeTurn = 't1', activeDot, activeCat, timerVal = 30, timerInterval, answeredQuestions = 0;
 
-        function checkLogin() {
-            const email = document.getElementById('userEmail').value.toLowerCase().trim();
-            const pass = document.getElementById('userPass').value;
-            const user = (typeof ALLOWED_USERS !== 'undefined') ? ALLOWED_USERS.find(u => u.email.toLowerCase() === email && u.password === pass) : null;
-            if (user) {
+        function checkAccessCode() {
+            const code = document.getElementById('accessCode').value.toUpperCase().trim();
+            if (VALID_CODES.includes(code)) {
                 document.getElementById('login-screen').classList.add('hidden');
                 document.getElementById('selection-screen').classList.remove('hidden');
                 initSelection(); 
-            } else { document.getElementById('login-error').classList.remove('hidden'); }
+            } else { 
+                document.getElementById('login-error').classList.remove('hidden'); 
+            }
         }
+
+        // Allow pressing "Enter" to submit code
+        document.getElementById('accessCode').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') checkAccessCode();
+        });
 
         function initSelection() {
             const grid = document.getElementById('categoryGrid');
             grid.innerHTML = '';
             const groups = {};
+            
+            if (typeof quizData === 'undefined') {
+                console.error("Quiz data not loaded. Make sure questions.json is correctly linked.");
+                return;
+            }
+
             Object.keys(quizData).forEach(k => {
                 const g = k.split(' - ')[0];
                 if(!groups[g]) groups[g] = [];
@@ -225,7 +235,11 @@
                             selectingTeam = 't2';
                             document.getElementById('box-t1').classList.remove('active-selection');
                             document.getElementById('box-t2').classList.add('active-selection');
-                        } else if(selectedCats.t2.length === 3) document.getElementById('startBtn').disabled = false;
+                            document.getElementById('selection-instruction').innerText = "بانتظار الفريق الثاني لاختيار 3 مواضيع...";
+                        } else if(selectedCats.t2.length === 3) {
+                            document.getElementById('startBtn').disabled = false;
+                            document.getElementById('selection-instruction').innerText = "جاهزون للبدء!";
+                        }
                     };
                     grid.appendChild(el);
                 });
@@ -361,8 +375,8 @@
         }
 
         function addT(p, txt) { const s = document.createElement('span'); s.className='token-item'; s.innerText=txt; p.appendChild(s); }
+        
         function rematch() {
-            // Reset match data but keep cumulative and win history for the session
             answeredQuestions = 0;
             selectedCats = { t1: [], t2: [] };
             selectingTeam = 't1';
@@ -372,8 +386,10 @@
             document.getElementById('game-screen').classList.add('hidden');
             document.getElementById('selection-screen').classList.remove('hidden');
             document.getElementById('startBtn').disabled = true;
+            document.getElementById('selection-instruction').innerText = "بانتظار الفريق الأول لاختيار 3 مواضيع...";
             initSelection();
         }
+
         function updateTurnText() { document.getElementById('turn-display').innerText = `دور: ${teamData[activeTurn].name}`; }
     </script>
 </body>
